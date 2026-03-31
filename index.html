@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spider-Mobot Full AI</title>
+    <title>Spider-Mobot AI Brain</title>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { margin: 0; background: #0a0a12; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #00fff2; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        #robot-face { display: flex; gap: 60px; transition: 0.3s; }
-        .eye { width: 80px; height: 80px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 30px #00fff2; transition: 0.2s; position: relative; }
-        .eye::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 15px; left: 15px; }
-        .blink { height: 10px !important; }
-        #status { margin-top: 30px; font-size: 1.2rem; text-shadow: 0 0 10px #00fff2; text-align: center; max-width: 80%; }
-        #video { position: fixed; bottom: 10px; right: 10px; width: 120px; border: 1px solid #00fff2; border-radius: 10px; opacity: 0.5; }
+        body { margin: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #00fff2; font-family: sans-serif; }
+        #robot-face { display: flex; gap: 50px; margin-bottom: 20px; }
+        .eye { width: 60px; height: 60px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 20px #00fff2; transition: 0.2s; }
+        .blink { height: 5px; }
+        /* Camera ka chota dabba */
+        #video { border: 2px solid #00fff2; border-radius: 10px; width: 150px; height: 110px; position: fixed; bottom: 20px; right: 20px; }
+        #status { font-size: 1.2rem; text-align: center; }
     </style>
 </head>
 <body>
@@ -22,75 +22,59 @@
         <div id="right-eye" class="eye"></div>
     </div>
 
-    <div id="status">System Initializing...</div>
+    <div id="status">AI Brain Load Ho Raha Hai...</div>
+    
     <video id="video" autoplay muted></video>
 
     <script>
-        const statusText = document.getElementById('status');
         const video = document.getElementById('video');
-        const eyes = document.querySelectorAll('.eye');
+        const statusText = document.getElementById('status');
 
-        // 1. Robot ka Bolna (Text to Speech) 🔊
-        function robotSpeak(text) {
-            const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = 'hi-IN'; // Hindi voice
-            speech.rate = 1;
-            window.speechSynthesis.speak(speech);
-        }
-
-        // 2. Aapki Baat Sunna (Speech to Text) 🎙️
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const listen = new Recognition();
-        listen.lang = 'hi-IN';
-
-        listen.onresult = (event) => {
-            const command = event.results[0][0].transcript.toLowerCase();
-            processCommand(command);
-        };
-
-        function processCommand(cmd) {
-            if (cmd.includes("kaise ho")) {
-                robotSpeak("Main bahut badhiya hoon Master! Aap kaise hain?");
-            } else if (cmd.includes("naam")) {
-                robotSpeak("Mera naam Spider Mobot hai, aapka AI saathi.");
-            } else {
-                robotSpeak("Maine suna: " + cmd);
+        // 1. Camera On Karna 📸
+        async function startVideo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                video.srcObject = stream;
+                statusText.innerText = "Camera On! Ab AI models load ho rahe hain...";
+                loadModels();
+            } catch (err) {
+                statusText.innerText = "Camera error! Settings check karein.";
             }
-            setTimeout(() => listen.start(), 3000); // Dobara sunna shuru karein
         }
 
-        // 3. Chehra aur Mood Pehchanna (Face AI) 🧠
-        async function startAI() {
+        // 2. AI Brain (Models) Load Karna 🧠
+        async function loadModels() {
             const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
             await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-            
-            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-            video.srcObject = stream;
-            
-            statusText.innerText = "Suno, Gussa, Khush... Main dekh aur sun raha hoon!";
-            robotSpeak("System online. Namaste Master!");
-            listen.start();
-            detect();
+            statusText.innerText = "AI Taiyar Hai! Mujhe apna chehra dikhaiye.";
+            detectFace();
         }
 
-        async function detect() {
+        // 3. Chehra aur Expression Pehchanna 🧐
+        async function detectFace() {
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+                
                 if (detections.length > 0) {
-                    const mood = Object.keys(detections[0].expressions).reduce((a, b) => detections[0].expressions[a] > detections[0].expressions[b] ? a : b);
-                    if (mood === 'happy') {
-                        eyes.forEach(e => e.style.background = "#ffff00"); // Peeli aankhein
-                    } else if (mood === 'angry') {
-                        eyes.forEach(e => e.style.background = "#ff0000"); // Laal aankhein
-                    } else {
-                        eyes.forEach(e => e.style.background = "#00fff2"); // Normal
+                    const expression = detections[0].expressions;
+                    // Sabse zyada probability wala expression dhoondna
+                    const topExpression = Object.keys(expression).reduce((a, b) => expression[a] > expression[b] ? a : b);
+                    
+                    statusText.innerText = "Main dekh raha hoon: " + topExpression;
+                    
+                    // Robot ki aankhein badalna
+                    if (topExpression === 'happy') {
+                        statusText.innerText = "Aap Khush Hain! 😊";
                     }
+                } else {
+                    statusText.innerText = "Koi dikh nahi raha...";
                 }
-            }, 1000);
+            }, 500);
         }
 
-        startAI();
+        startVideo();
     </script>
 </body>
 </html>
