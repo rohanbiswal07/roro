@@ -3,42 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoRo AI - Full Power</title>
+    <title>RoRo Voice Active</title>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { margin: 0; background: #050510; color: #00fff2; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #roro-face { display: flex; gap: 50px; margin-bottom: 20px; transition: 0.3s; }
-        .eye { width: 80px; height: 80px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 25px #00fff2; position: relative; }
-        #status-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; width: 85%; text-align: center; }
-        #log { font-size: 0.8rem; color: #ffaa00; margin-top: 10px; height: 50px; overflow-y: auto; }
-        #video { position: fixed; bottom: 10px; right: 10px; width: 120px; border: 2px solid #00fff2; border-radius: 10px; opacity: 0.5; }
-        #start-btn { padding: 20px 40px; font-size: 1.5rem; background: #00fff2; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 0 20px #00fff2; }
+        body { margin: 0; background: #000; color: #00fff2; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .eye { width: 70px; height: 70px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 20px #00fff2; margin: 20px; display: inline-block; transition: 0.3s; }
+        #msg { font-size: 1.2rem; color: yellow; margin-top: 20px; text-align: center; padding: 0 20px; }
+        #start-btn { padding: 20px 40px; font-size: 1.5rem; background: #00fff2; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="start-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; display:flex; justify-content:center; align-items:center; z-index:100;">
-        <button id="start-btn">ACTIVATE RORO ⚡</button>
+    <div id="eyes-container">
+        <div class="eye"></div>
+        <div class="eye"></div>
     </div>
 
-    <div id="roro-face">
-        <div id="l-eye" class="eye"></div>
-        <div id="r-eye" class="eye"></div>
-    </div>
-
-    <div id="status-box">
-        <div id="main-status">RoRo is Offline</div>
-        <div id="log">Logs: Waiting for activation...</div>
-    </div>
-
-    <video id="video" autoplay muted playsinline></video>
+    <div id="msg">RoRo ko chalu karne ke liye button dabayein</div>
+    <br>
+    <button id="start-btn">START RORO 🎙️</button>
 
     <script>
-        const log = (msg) => { document.getElementById('log').innerHTML += `<br>> ${msg}`; console.log(msg); };
-        const status = document.getElementById('main-status');
-        const eyes = document.querySelectorAll('.eye');
+        const msgBox = document.getElementById('msg');
+        const startBtn = document.getElementById('start-btn');
 
-        // 1. Bolne ki Shakti (Voice) 🗣️
         function speak(text) {
             window.speechSynthesis.cancel();
             const s = new SpeechSynthesisUtterance(text);
@@ -46,71 +34,54 @@
             window.speechSynthesis.speak(s);
         }
 
-        // 2. Sunne ki Shakti (Command) 🎙️
-        function startListening() {
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!SpeechRec) return log("Speech Not Supported");
-            
-            const rec = new SpeechRec();
-            rec.lang = 'hi-IN';
-            rec.continuous = true;
+        // Voice Sunne ka "Super" Function 🎙️
+        function startRoRoListening() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                msgBox.innerText = "Aapka browser voice support nahi karta.";
+                return;
+            }
 
-            rec.onresult = (event) => {
-                const cmd = event.results[event.results.length - 1][0].transcript.toLowerCase();
-                log("Maine Suna: " + cmd);
-                
-                if(cmd.includes("kaise ho")) {
-                    speak("Main bilkul theek hoon! Aap kaise hain?");
-                    changeEyes("#ffff00");
-                } else if(cmd.includes("naam")) {
-                    speak("Mera naam RoRo hai, aapka smart robot.");
+            const recog = new SpeechRecognition();
+            recog.lang = 'hi-IN';
+            recog.continuous = false; // Mobile par false zyada stable rehta hai
+
+            recog.onstart = () => {
+                msgBox.innerText = "RoRo sun raha hai... Boliye 'Kaise ho'";
+                console.log("Mic On ✅");
+            };
+
+            recog.onresult = (event) => {
+                const command = event.results[0][0].transcript.toLowerCase();
+                msgBox.innerText = "Maine suna: " + command;
+
+                if (command.includes("kaise ho")) {
+                    speak("Main bahut achha hoon Master! Aapka din kaisa hai?");
+                } else if (command.includes("naam")) {
+                    speak("Mera naam RoRo hai.");
+                } else {
+                    speak("Aapne kaha " + command);
                 }
             };
-            rec.start();
-            log("Listening Started...");
+
+            // Agar mic band ho jaye toh wapas chalu karein
+            recog.onend = () => {
+                console.log("Mic Restarting...");
+                recog.start(); 
+            };
+
+            recog.onerror = (e) => {
+                console.log("Error: ", e.error);
+                if(e.error === 'not-allowed') msgBox.innerText = "Please Mic Permission Allow karein!";
+            };
+
+            recog.start();
         }
 
-        function changeEyes(color) {
-            eyes.forEach(e => { e.style.background = color; e.style.boxShadow = `0 0 30px ${color}`; });
-        }
-
-        // 3. Dekhne ki Shakti (Face AI) 👁️
-        async function initAI() {
-            try {
-                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-                log("Loading AI Models...");
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                log("Models Loaded! ✅");
-
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('video').srcObject = stream;
-                log("Camera Active! 📸");
-
-                detectFace();
-            } catch (err) {
-                log("Error: " + err.message);
-            }
-        }
-
-        async function detectFace() {
-            setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-                if(detections.length > 0) {
-                    status.innerText = "RoRo aapko dekh raha hai! 👀";
-                    const expressions = detections[0].expressions;
-                    if(expressions.happy > 0.7) changeEyes("#ffff00");
-                    else if(expressions.angry > 0.7) changeEyes("#ff0000");
-                    else changeEyes("#00fff2");
-                }
-            }, 1000);
-        }
-
-        document.getElementById('start-btn').onclick = function() {
-            document.getElementById('start-screen').style.display = 'none';
-            speak("System activated. Namaste Master, main RoRo hoon.");
-            initAI();
-            startListening();
+        startBtn.onclick = () => {
+            startBtn.style.display = 'none';
+            speak("System chalu ho gaya hai. Namaste Master!");
+            startRoRoListening();
         };
     </script>
 </body>
