@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spider-Mobot AI Face</title>
+    <style>
+        /* CSS: Chehre ka rang aur roop */
+        body {
+            margin: 0;
+            background-color: #1a1a2e; /* Dark Blue */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #00fff2;
+            font-family: sans-serif;
+        }
+
+        #robot-face {
+            width: 300px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Munh hatane ke baad centralise kiya */
+        }
+
+        .eye-container {
+            display: flex;
+            gap: 50px;
+            position: relative;
+        }
+
+        .eye {
+            width: 60px;
+            height: 60px;
+            background-color: #00fff2; /* Cyan Glow */
+            border-radius: 50%; /* Default: Gol */
+            box-shadow: 0 0 20px #00fff2;
+            transition: all 0.2s ease; /* Saare changes smooth honge */
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- Expressions --- */
+
+        /* Blink (Palkein jhapkaana) */
+        .blink {
+            height: 5px !important;
+        }
+
+        /* Happy (Khush: Upar ki taraf curve) */
+        .happy .eye {
+            border-radius: 50% 50% 10% 10%; /* Niche se flat */
+        }
+
+        /* Angry (Gussa: Teerchi aankhein) */
+        .angry #left-eye {
+            transform: rotate(20deg);
+            border-radius: 100% 0% 50% 50%;
+        }
+        .angry #right-eye {
+            transform: rotate(-20deg);
+            border-radius: 0% 100% 50% 50%;
+        }
+
+        /* Thinking (Soch pich: Chhoti aur upar dekhti hui) */
+        .thinking .eye {
+            width: 40px;
+            height: 40px;
+            transform: translateY(-20px);
+        }
+
+        /* Status text for feedback */
+        #status {
+            position: absolute;
+            bottom: 20px;
+            font-size: 1.2rem;
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="robot-face">
+        <div class="eye-container" id="eye-group">
+            <div id="left-eye" class="eye"></div>
+            <div id="right-eye" class="eye"></div>
+        </div>
+    </div>
+
+    <div id="status">Bolo: "Suno", "Gussa", "Khush", "Normal"</div>
+
+    <script>
+        // JavaScript: Expressions aur AI Logic
+        const eyeGroup = document.getElementById('eye-group');
+        const leftEye = document.getElementById('left-eye');
+        const rightEye = document.getElementById('right-eye');
+        const statusText = document.getElementById('status');
+
+        // --- Function: Expression Badalna ---
+        function setExpression(expressionClass) {
+            // Pehle saare purane classes hatao
+            eyeGroup.className = 'eye-container'; 
+            
+            // Naya expression lagao (agar normal nahi hai)
+            if (expressionClass !== 'normal') {
+                eyeGroup.classList.add(expressionClass);
+            }
+        }
+
+        // --- Function: Automatic Blink ---
+        function blink() {
+            if (eyeGroup.classList.contains('angry')) return; // Gusse mein blink nahi
+
+            leftEye.classList.add('blink');
+            rightEye.classList.add('blink');
+            
+            setTimeout(() => {
+                leftEye.classList.remove('blink');
+                rightEye.classList.remove('blink');
+            }, 150);
+        }
+
+        // Har 4 se 8 second mein auto-blink
+        setInterval(blink, Math.random() * 4000 + 4000);
+
+        // ==========================================
+        // --- OFFLINE AI: VOICE COMMANDS (BETA) ---
+        // ==========================================
+
+        // Browser ki built-in Web Speech API use kar rahe hain
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true; // Lagatar sunega
+            recognition.lang = 'hi-IN'; // Hindi command sunne ke liye set kiya
+            recognition.interimResults = false; // Sirf final command chahiye
+
+            recognition.onstart = () => {
+                statusText.innerText = "Main sun raha hoon... Bolo: Suno, Gussa, Khush";
+                statusText.style.color = "#00fff2";
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Error:", event.error);
+                statusText.innerText = "Mic error! Check permissions.";
+                statusText.style.color = "red";
+            };
+
+            recognition.onresult = (event) => {
+                const command = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+                console.log("Sunai diya:", command);
+                statusText.innerText = `Sunai diya: "${command}"`;
+
+                // --- Command Logic ---
+                if (command.includes('suno') || command.includes('listen')) {
+                    setExpression('thinking');
+                } else if (command.includes('gussa') || command.includes('angry')) {
+                    setExpression('angry');
+                } else if (command.includes('khush') || command.includes('happy')) {
+                    setExpression('happy');
+                } else if (command.includes('normal')) {
+                    setExpression('normal');
+                }
+            };
+
+            // Start Listening!
+            recognition.start();
+
+        } else {
+            statusText.innerText = "Aapka browser voice commands support nahi karta.";
+            statusText.style.color = "orange";
+        }
+
+    </script>
+</body>
+</html>
