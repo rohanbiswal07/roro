@@ -3,78 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spider-Mobot AI Brain</title>
+    <title>RoRo AI Companion</title>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { margin: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: #00fff2; font-family: sans-serif; }
-        #robot-face { display: flex; gap: 50px; margin-bottom: 20px; }
-        .eye { width: 60px; height: 60px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 20px #00fff2; transition: 0.2s; }
-        .blink { height: 5px; }
-        /* Camera ka chota dabba */
-        #video { border: 2px solid #00fff2; border-radius: 10px; width: 150px; height: 110px; position: fixed; bottom: 20px; right: 20px; }
-        #status { font-size: 1.2rem; text-align: center; }
+        body { margin: 0; background: #080810; color: #00fff2; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #roro-face { display: flex; gap: 60px; transition: 0.3s; margin-bottom: 20px; }
+        .eye { width: 80px; height: 80px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 30px #00fff2; transition: background 0.5s ease, box-shadow 0.5s ease; position: relative; }
+        .eye::after { content: ''; position: absolute; width: 25px; height: 25px; background: white; border-radius: 50%; top: 15px; left: 15px; opacity: 0.8; }
+        #status { font-size: 1.3rem; text-align: center; max-width: 80%; text-shadow: 0 0 10px #00fff2; min-height: 1.5em; }
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        #start-btn { padding: 20px 40px; font-size: 1.5rem; background: #00fff2; color: #000; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 0 20px #00fff2; }
+        #video { position: fixed; bottom: 10px; right: 10px; width: 130px; border: 2px solid #00fff2; border-radius: 12px; opacity: 0.4; }
     </style>
 </head>
 <body>
 
-    <div id="robot-face">
+    <div id="start-overlay">
+        <h1 style="color:#00fff2; text-shadow: 0 0 15px #00fff2;">RoRo AI Companion</h1>
+        <button id="start-btn">Activate RoRo ⚡</button>
+    </div>
+
+    <div id="roro-face">
         <div id="left-eye" class="eye"></div>
         <div id="right-eye" class="eye"></div>
     </div>
 
-    <div id="status">AI Brain Load Ho Raha Hai...</div>
+    <div id="status">System Off... Click the button.</div>
     
     <video id="video" autoplay muted></video>
 
     <script>
-        const video = document.getElementById('video');
         const statusText = document.getElementById('status');
+        const startBtn = document.getElementById('start-btn');
+        const startOverlay = document.getElementById('start-overlay');
+        const video = document.getElementById('video');
+        const eyes = document.querySelectorAll('.eye');
 
-        // 1. Camera On Karna 📸
-        async function startVideo() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-                video.srcObject = stream;
-                statusText.innerText = "Camera On! Ab AI models load ho rahe hain...";
-                loadModels();
-            } catch (err) {
-                statusText.innerText = "Camera error! Settings check karein.";
+        // --- Core Functions ---
+
+        // 1. Voice Output (Text-to-Speech) 🗣️
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = 'hi-IN';
+            speech.rate = 1.1;
+            speech.pitch = 1;
+            window.speechSynthesis.speak(speech);
+        }
+
+        // 2. Command Processing Logic 🧠
+        function processCommand(command) {
+            command = command.toLowerCase();
+            if (command.includes("kaise ho")) {
+                setEyeMood('happy');
+                speak("Main bilkul mast hoon Master! Aap kaise hain?");
+            } else if (command.includes("tumhara naam")) {
+                setEyeMood('normal');
+                speak("Mera naam RoRo hai. Main aapka AI saathi hoon.");
+            } else if (command.includes("gussa")) {
+                setEyeMood('angry');
+                speak("Mujhe gussa aa raha hai! Grrr!");
+            } else if (command.includes("khush")) {
+                setEyeMood('happy');
+                speak("Main bahut khush hoon!");
+            } else {
+                setEyeMood('normal');
+                speak("Maine suna: " + command);
             }
         }
 
-        // 2. AI Brain (Models) Load Karna 🧠
-        async function loadModels() {
-            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-            statusText.innerText = "AI Taiyar Hai! Mujhe apna chehra dikhaiye.";
-            detectFace();
-        }
+        // --- AI and Interaction Setup ---
 
-        // 3. Chehra aur Expression Pehchanna 🧐
-        async function detectFace() {
-            setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-                
-                if (detections.length > 0) {
-                    const expression = detections[0].expressions;
-                    // Sabse zyada probability wala expression dhoondna
-                    const topExpression = Object.keys(expression).reduce((a, b) => expression[a] > expression[b] ? a : b);
-                    
-                    statusText.innerText = "Main dekh raha hoon: " + topExpression;
-                    
-                    // Robot ki aankhein badalna
-                    if (topExpression === 'happy') {
-                        statusText.innerText = "Aap Khush Hain! 😊";
-                    }
+        // Change eye color/effect based on mood
+        function setEyeMood(mood) {
+            eyes.forEach(eye => {
+                if (mood === 'happy') {
+                    eye.style.background = "#ffff00"; // Yellow
+                    eye.style.boxShadow = "0 0 40px #ffff00";
+                } else if (mood === 'angry') {
+                    eye.style.background = "#ff0000"; // Red
+                    eye.style.boxShadow = "0 0 40px #ff0000";
                 } else {
-                    statusText.innerText = "Koi dikh nahi raha...";
+                    eye.style.background = "#00fff2"; // Cyan (Normal)
+                    eye.style.boxShadow = "0 0 30px #00fff2";
                 }
-            }, 500);
+            });
         }
 
-        startVideo();
+        // 3. Voice Input (Speech Recognition) 🎙️
+        function startListening() {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRec) {
+                const rec = new SpeechRec();
+                rec.lang = 'hi-IN';
+                rec.continuous = true;
+                rec.interimResults = false;
+
+                rec.onresult = (event) => {
+                    const command = event.results[event.results.length - 1][0].transcript;
+                    statusText.innerText = "Maine Suna: " + command;
+                    processCommand(command);
+                };
+
+                rec.onerror = (err) => {
+                    console.error("Speech Recognition Error:", err);
+                    rec.start(); // Try to restart on error
+                };
+
+                rec.start();
+                statusText.innerText = "Suno, Gussa, Khush, Tumhara Naam... Main sun raha hoon!";
+            } else {
+                statusText.innerText = "Browser voice support nahi karta.";
+            }
+        }
+
+        // 4. Face Recognition Setup (Face AI) 📸🧠
+        async function startFaceAI() {
+            try {
+                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                video.srcObject = stream;
+                console.log("Face AI models loaded and camera started.");
+                startMoodDetection();
+            } catch (err) {
+                console.error("Face AI Error:", err);
+                statusText.innerText = "Camera problem. Permission check karein.";
+            }
+        }
+
+        function startMoodDetection() {
+            setInterval(async () => {
+                if (!video.paused) {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+                    if (detections.length > 0) {
+                        const expressions = detections[0].expressions;
+                        const topExpression = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+                        console.log("Mood Detected:", topExpression);
+                        // Optional: You can link this mood to eye color change automatically
+                        // For now, it logs your mood in the console.
+                    }
+                }
+            }, 1000);
+        }
+
+        // --- System Start ---
+        startBtn.onclick = () => {
+            startOverlay.style.display = 'none';
+            statusText.innerText = "System Initializing...";
+            speak("System activated. Namaste Master! Mera naam RoRo hai.");
+            startFaceAI();
+            startListening();
+        };
+
     </script>
 </body>
 </html>
