@@ -1,88 +1,358 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoRo Voice Active</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <style>
-        body { margin: 0; background: #000; color: #00fff2; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .eye { width: 70px; height: 70px; background: #00fff2; border-radius: 50%; box-shadow: 0 0 20px #00fff2; margin: 20px; display: inline-block; transition: 0.3s; }
-        #msg { font-size: 1.2rem; color: yellow; margin-top: 20px; text-align: center; padding: 0 20px; }
-        #start-btn { padding: 20px 40px; font-size: 1.5rem; background: #00fff2; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Spider-Mobot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#050508;color:white;font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,0.03) 1px,transparent 1px);background-size:40px 40px;z-index:0}
+.wrap{position:relative;z-index:1;max-width:420px;margin:0 auto;padding:20px 16px 50px}
+h1{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#FF6B00,#FF9500,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;filter:drop-shadow(0 0 20px rgba(255,107,0,0.5))}
+.sub{text-align:center;font-size:10px;letter-spacing:3px;color:rgba(255,107,0,0.5);margin-bottom:20px}
+
+/* FACE */
+.face-card{background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.2);border-radius:24px;padding:20px;text-align:center;margin-bottom:14px;position:relative}
+.exp-tag{display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;letter-spacing:2px;font-family:'Orbitron',sans-serif;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.3);color:#FF6B00;margin-bottom:10px}
+.face-svg{width:150px;height:150px;filter:drop-shadow(0 0 20px rgba(255,107,0,0.3));margin-bottom:14px}
+.eye-l{animation:blink 4s ease-in-out infinite;transform-origin:55px 78px}
+.eye-r{animation:blink 4s ease-in-out infinite 0.1s;transform-origin:105px 78px}
+@keyframes blink{0%,45%,55%,100%{transform:scaleY(1)}50%{transform:scaleY(0.05)}}
+.blush{animation:bp 2s ease-in-out infinite}
+@keyframes bp{0%,100%{opacity:0.4}50%{opacity:0.7}}
+.bubble{background:rgba(255,107,0,0.1);border:1px solid rgba(255,107,0,0.3);border-radius:16px;padding:10px 16px;font-size:16px;font-weight:600;min-height:46px;display:flex;align-items:center;justify-content:center;transition:opacity 0.3s}
+
+/* STATUS */
+.sbar{display:flex;gap:8px;margin-bottom:14px}
+.si{flex:1;background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.15);border-radius:12px;padding:10px 6px;text-align:center}
+.si .lbl{font-size:9px;letter-spacing:2px;color:rgba(255,107,0,0.6);text-transform:uppercase;display:block;margin-bottom:4px}
+.si .val{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#FF6B00}
+.dot{width:7px;height:7px;border-radius:50%;background:#ff4444;display:inline-block;margin-right:3px;vertical-align:middle}
+.dot.on{background:#44ff88;box-shadow:0 0 8px #44ff88;animation:dp 1.5s ease-in-out infinite}
+@keyframes dp{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* INPUTS */
+.card{background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.15);border-radius:16px;padding:14px;margin-bottom:12px}
+.card label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:rgba(255,107,0,0.6);display:block;margin-bottom:8px}
+input{width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,107,0,0.3);border-radius:10px;padding:10px 14px;color:white;font-family:'Orbitron',sans-serif;font-size:13px;outline:none;letter-spacing:1px}
+input:focus{border-color:#FF6B00;box-shadow:0 0 15px rgba(255,107,0,0.2)}
+
+/* BUTTONS */
+.btn-connect{width:100%;padding:16px;background:linear-gradient(135deg,#FF6B00,#FF9500);border:none;border-radius:16px;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;color:white;cursor:pointer;margin-bottom:12px;box-shadow:0 0 30px rgba(255,107,0,0.4);transition:all 0.3s}
+.btn-connect:active{transform:scale(0.97)}
+.btn-connect.on{background:linear-gradient(135deg,#1a6b3a,#2db865);box-shadow:0 0 30px rgba(45,184,101,0.4)}
+
+.btn-mic{width:100%;padding:20px;background:rgba(255,107,0,0.08);border:2px solid rgba(255,107,0,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;gap:14px;cursor:pointer;transition:all 0.3s;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:12px}
+.btn-mic.on{background:rgba(255,107,0,0.15);border-color:#FF6B00;box-shadow:0 0 30px rgba(255,107,0,0.4);animation:mp 1s ease-in-out infinite;color:white}
+@keyframes mp{0%,100%{box-shadow:0 0 20px rgba(255,107,0,0.4)}50%{box-shadow:0 0 60px rgba(255,107,0,0.9)}}
+.mic-icon{font-size:32px}
+
+/* HINTS */
+.hints{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.hint{background:rgba(0,0,0,0.3);border:1px solid rgba(255,107,0,0.1);border-radius:8px;padding:7px 10px;font-size:12px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:6px}
+
+/* LOG */
+.log-list{list-style:none;max-height:80px;overflow-y:auto}
+.log-list li{font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,107,0,0.06);color:rgba(255,255,255,0.55);display:flex;gap:8px}
+.log-list li .t{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(255,107,0,0.4);min-width:40px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,107,0,0.3);border-radius:3px}
+</style>
 </head>
 <body>
+<div class="wrap">
 
-    <div id="eyes-container">
-        <div class="eye"></div>
-        <div class="eye"></div>
+  <h1>🕷️ SPIDER-MOBOT</h1>
+  <p class="sub">AI Autonomous Robot</p>
+
+  <!-- FACE -->
+  <div class="face-card">
+    <div class="exp-tag" id="expTag">😊 KHUSH</div><br>
+    <svg class="face-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="fg" cx="50%" cy="40%">
+          <stop offset="0%" stop-color="#FFE8D0"/>
+          <stop offset="100%" stop-color="#FFCBA4"/>
+        </radialGradient>
+      </defs>
+      <circle cx="80" cy="80" r="70" fill="url(#fg)"/>
+      <ellipse cx="80" cy="22" rx="56" ry="22" fill="#2C1810"/>
+      <ellipse cx="28" cy="58" rx="11" ry="28" fill="#2C1810"/>
+      <ellipse cx="132" cy="58" rx="11" ry="28" fill="#2C1810"/>
+      <ellipse class="blush" cx="42" cy="96" rx="17" ry="9" fill="#FF9999" opacity="0.5"/>
+      <ellipse class="blush" cx="118" cy="96" rx="17" ry="9" fill="#FF9999" opacity="0.5"/>
+      <!-- Left eye -->
+      <g class="eye-l">
+        <ellipse cx="55" cy="78" rx="15" ry="17" fill="white"/>
+        <ellipse cx="55" cy="80" rx="9" ry="11" fill="#7B5EA7"/>
+        <ellipse cx="55" cy="80" rx="5" ry="7" fill="#1a0a2e"/>
+        <ellipse cx="59" cy="75" rx="3" ry="3" fill="white"/>
+        <line x1="41" y1="63" x2="45" y2="58" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="51" y1="59" x2="52" y2="54" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="61" y1="59" x2="63" y2="54" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <!-- Right eye -->
+      <g class="eye-r">
+        <ellipse cx="105" cy="78" rx="15" ry="17" fill="white"/>
+        <ellipse cx="105" cy="80" rx="9" ry="11" fill="#7B5EA7"/>
+        <ellipse cx="105" cy="80" rx="5" ry="7" fill="#1a0a2e"/>
+        <ellipse cx="109" cy="75" rx="3" ry="3" fill="white"/>
+        <line x1="119" y1="63" x2="123" y2="58" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="109" y1="59" x2="110" y2="54" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="99" y1="59" x2="97" y2="54" stroke="#2C1810" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="80" cy="100" rx="4" ry="3" fill="#E8A882" opacity="0.5"/>
+      <!-- Mouths -->
+      <g id="mH"><path d="M 60 115 Q 80 133 100 115" stroke="#E8727A" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>
+      <g id="mS" style="display:none"><path d="M 60 126 Q 80 112 100 126" stroke="#E8727A" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>
+      <g id="mO" style="display:none"><ellipse cx="80" cy="120" rx="10" ry="12" fill="#E8727A"/><ellipse cx="80" cy="120" rx="6" ry="8" fill="#1a0a2e"/></g>
+      <g id="mL" style="display:none"><path d="M 62 115 Q 80 130 98 115" stroke="#E8727A" stroke-width="3.5" fill="none" stroke-linecap="round"/><text x="68" y="110" font-size="13" fill="#FF6B6B">♥ ♥</text></g>
+      <g id="sw" style="display:none"><ellipse cx="126" cy="67" rx="5" ry="7" fill="#88CCFF" opacity="0.8"/><polygon points="126,56 122,67 130,67" fill="#88CCFF" opacity="0.8"/></g>
+    </svg>
+    <div class="bubble" id="bubble">Namaskar Master! Main ready hoon! 🤖</div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="sbar">
+    <div class="si"><span class="lbl">Robot</span><span class="val"><span class="dot" id="rdot"></span><span id="rst">OFF</span></span></div>
+    <div class="si"><span class="lbl">Kaam</span><span class="val" id="mode">IDLE</span></div>
+    <div class="si"><span class="lbl">Awaaz</span><span class="val" id="vst">READY</span></div>
+  </div>
+
+  <!-- IP -->
+  <div class="card">
+    <label>ESP32 IP ADDRESS</label>
+    <input type="text" id="ip" placeholder="192.168.1.100" value="192.168.1.100"/>
+  </div>
+
+  <!-- CONNECT -->
+  <button class="btn-connect" id="conBtn" onclick="toggleConnect()">⚡ ROBOT CONNECT KARO</button>
+
+  <!-- MIC -->
+  <div class="btn-mic" id="micBtn" onclick="toggleVoice()">
+    <span class="mic-icon" id="micIco">🎤</span>
+    <span id="micLbl">Tap karke Hindi mein bolo</span>
+  </div>
+
+  <!-- HINTS -->
+  <div class="card">
+    <label>VOICE COMMANDS</label>
+    <div class="hints">
+      <div class="hint">🚀 "Aage jao"</div>
+      <div class="hint">⬅️ "Peeche jao"</div>
+      <div class="hint">↩️ "Left mudo"</div>
+      <div class="hint">↪️ "Right mudo"</div>
+      <div class="hint">✋ "Ruko"</div>
+      <div class="hint">💃 "Nacho"</div>
+      <div class="hint">😴 "So ja"</div>
+      <div class="hint">👋 "Namaste"</div>
     </div>
+  </div>
 
-    <div id="msg">RoRo ko chalu karne ke liye button dabayein</div>
-    <br>
-    <button id="start-btn">START RORO 🎙️</button>
+  <!-- LOG -->
+  <div class="card">
+    <label>LOG</label>
+    <ul class="log-list" id="log">
+      <li><span class="t">--:--</span>System ready...</li>
+    </ul>
+  </div>
 
-    <script>
-        const msgBox = document.getElementById('msg');
-        const startBtn = document.getElementById('start-btn');
+</div>
 
-        function speak(text) {
-            window.speechSynthesis.cancel();
-            const s = new SpeechSynthesisUtterance(text);
-            s.lang = 'hi-IN';
-            window.speechSynthesis.speak(s);
-        }
+<script>
+var connected=false, listening=false, rec=null;
+var synth=window.speechSynthesis;
 
-        // Voice Sunne ka "Super" Function 🎙️
-        function startRoRoListening() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                msgBox.innerText = "Aapka browser voice support nahi karta.";
-                return;
-            }
+// Voices preload
+var voices=[];
+function loadVoices(){
+  voices=synth.getVoices();
+}
+if(synth){
+  loadVoices();
+  synth.onvoiceschanged=loadVoices;
+}
 
-            const recog = new SpeechRecognition();
-            recog.lang = 'hi-IN';
-            recog.continuous = false; // Mobile par false zyada stable rehta hai
+// SPEAK
+function speak(txt){
+  if(!synth)return;
+  synth.cancel();
+  var u=new SpeechSynthesisUtterance(txt);
+  u.lang='hi-IN';
+  u.rate=1.0;
+  u.pitch=1.3;
+  u.volume=1.0;
+  // Find best voice
+  var v=voices.find(function(x){return x.lang.startsWith('hi')});
+  if(!v) v=voices.find(function(x){return x.lang.includes('IN')});
+  if(!v && voices.length) v=voices[0];
+  if(v) u.voice=v;
+  synth.speak(u);
+}
 
-            recog.onstart = () => {
-                msgBox.innerText = "RoRo sun raha hai... Boliye 'Kaise ho'";
-                console.log("Mic On ✅");
-            };
+// BUBBLE
+function say(txt,doSpeak){
+  var b=document.getElementById('bubble');
+  b.style.opacity='0';
+  setTimeout(function(){
+    b.textContent=txt;
+    b.style.opacity='1';
+  },150);
+  if(doSpeak!==false) speak(txt);
+}
 
-            recog.onresult = (event) => {
-                const command = event.results[0][0].transcript.toLowerCase();
-                msgBox.innerText = "Maine suna: " + command;
+// EXPRESSION
+function expr(name,txt){
+  var tags={happy:'😊 KHUSH',sad:'😢 UDAAS',wow:'😲 HAIRAAN',love:'🥰 PYAAR',nervous:'😅 GHABRA'};
+  document.getElementById('expTag').textContent=tags[name]||tags.happy;
+  var mouths=['mH','mS','mO','mL'];
+  mouths.forEach(function(id){document.getElementById(id).style.display='none'});
+  document.getElementById('sw').style.display='none';
+  if(name==='happy') document.getElementById('mH').style.display='block';
+  else if(name==='sad'){document.getElementById('mS').style.display='block';}
+  else if(name==='wow') document.getElementById('mO').style.display='block';
+  else if(name==='love') document.getElementById('mL').style.display='block';
+  else if(name==='nervous'){document.getElementById('mH').style.display='block';document.getElementById('sw').style.display='block';}
+  else document.getElementById('mH').style.display='block';
+  if(txt) say(txt);
+}
 
-                if (command.includes("kaise ho")) {
-                    speak("Main bahut achha hoon Master! Aapka din kaisa hai?");
-                } else if (command.includes("naam")) {
-                    speak("Mera naam RoRo hai.");
-                } else {
-                    speak("Aapne kaha " + command);
-                }
-            };
+// LOG
+function log(txt){
+  var ul=document.getElementById('log');
+  var li=document.createElement('li');
+  var d=new Date();
+  var t=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  li.innerHTML='<span class="t">'+t+'</span>'+txt;
+  ul.insertBefore(li,ul.firstChild);
+  if(ul.children.length>12) ul.removeChild(ul.lastChild);
+}
 
-            // Agar mic band ho jaye toh wapas chalu karein
-            recog.onend = () => {
-                console.log("Mic Restarting...");
-                recog.start(); 
-            };
+// SEND COMMAND
+function send(cmd){
+  var ip=document.getElementById('ip').value.trim();
+  if(!connected){say('Pehle connect karo Master!');return;}
+  document.getElementById('mode').textContent=cmd.toUpperCase();
+  fetch('http://'+ip+'/'+cmd,{mode:'no-cors'})
+    .then(function(){log('✅ '+cmd);})
+    .catch(function(){log('❌ '+cmd+' - WiFi check karo');});
+}
 
-            recog.onerror = (e) => {
-                console.log("Error: ", e.error);
-                if(e.error === 'not-allowed') msgBox.innerText = "Please Mic Permission Allow karein!";
-            };
+// CONNECT
+function toggleConnect(){
+  connected=!connected;
+  var btn=document.getElementById('conBtn');
+  var dot=document.getElementById('rdot');
+  if(connected){
+    btn.textContent='✅ CONNECTED - Hatane ke liye tap karo';
+    btn.classList.add('on');
+    dot.classList.add('on');
+    document.getElementById('rst').textContent='ON';
+    document.getElementById('mode').textContent='READY';
+    expr('love','Haanji Master! Main bilkul ready hoon!');
+    log('🔗 Robot connected!');
+  } else {
+    btn.textContent='⚡ ROBOT CONNECT KARO';
+    btn.classList.remove('on');
+    dot.classList.remove('on');
+    document.getElementById('rst').textContent='OFF';
+    document.getElementById('mode').textContent='IDLE';
+    expr('sad','Alvida Master... phir milte hain!');
+    log('🔌 Disconnected');
+  }
+}
 
-            recog.start();
-        }
+// PROCESS COMMAND
+function process(txt){
+  txt=txt.toLowerCase();
+  log('🎤 "'+txt+'"');
+  if(txt.includes('aage')||txt.includes('chalo')||txt.includes('jao')||txt.includes('forward')){
+    send('forward'); expr('happy','Ji Master! Aage chal raha hoon!');
+  } else if(txt.includes('peeche')||txt.includes('back')||txt.includes('wapas')){
+    send('backward'); expr('nervous','Theek hai, peeche ja raha hoon!');
+  } else if(txt.includes('left')||txt.includes('baye')){
+    send('left'); expr('happy','Left turn le raha hoon!');
+  } else if(txt.includes('right')||txt.includes('dayi')||txt.includes('seedha')){
+    send('right'); expr('happy','Right turn le raha hoon!');
+  } else if(txt.includes('ruko')||txt.includes('stop')||txt.includes('bas')||txt.includes('thehr')){
+    send('stop'); expr('wow','Ruk gaya Master!');
+  } else if(txt.includes('nacho')||txt.includes('dance')){
+    send('dance'); expr('love','Weeee! Nachne ka time aa gaya!');
+  } else if(txt.includes('so')||txt.includes('sleep')||txt.includes('sona')){
+    send('sleep'); expr('sad','Achha... so jaata hoon... zzz');
+  } else if(txt.includes('namaste')||txt.includes('hello')||txt.includes('hii')||txt.includes('hi ')){
+    send('wave'); expr('love','Namaskar Master! Aapka swagat hai!');
+  } else if(txt.includes('pyaar')||txt.includes('love')||txt.includes('shabash')||txt.includes('accha')){
+    expr('love','Awww! Aap bahut achhe hain Master! Mujhe bahut khushi ho rahi hai!');
+  } else {
+    expr('wow','Samajh nahi aaya Master... dobara bolo?');
+    log('❓ Command pehchana nahi');
+  }
+}
 
-        startBtn.onclick = () => {
-            startBtn.style.display = 'none';
-            speak("System chalu ho gaya hai. Namaste Master!");
-            startRoRoListening();
-        };
-    </script>
+// VOICE
+function toggleVoice(){
+  if(listening){rec&&rec.stop();return;}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    expr('sad','Is browser mein voice kaam nahi karta. Safari use karo!');
+    log('❌ Voice not supported');
+    return;
+  }
+  rec=new SR();
+  rec.lang='hi-IN';
+  rec.continuous=false;
+  rec.interimResults=false;
+  rec.maxAlternatives=3;
+
+  rec.onstart=function(){
+    listening=true;
+    document.getElementById('micBtn').classList.add('on');
+    document.getElementById('micIco').textContent='🔴';
+    document.getElementById('micLbl').textContent='Sun raha hoon... bolo!';
+    document.getElementById('vst').textContent='ON';
+    say('Bol Master, sun raha hoon!',false);
+    expr('wow');
+  };
+
+  rec.onresult=function(e){
+    for(var i=0;i<e.results[0].length;i++){
+      var t=e.results[0][i].transcript;
+      if(t){process(t);break;}
+    }
+  };
+
+  rec.onend=function(){
+    listening=false;
+    document.getElementById('micBtn').classList.remove('on');
+    document.getElementById('micIco').textContent='🎤';
+    document.getElementById('micLbl').textContent='Tap karke Hindi mein bolo';
+    document.getElementById('vst').textContent='READY';
+  };
+
+  rec.onerror=function(e){
+    log('❌ '+e.error);
+    if(e.error==='not-allowed') expr('sad','Mic ki permission do! Settings mein jao.');
+    else if(e.error==='no-speech') expr('nervous','Kuch sunai nahi diya... dobara try karo!');
+  };
+
+  rec.start();
+}
+
+// Random expressions
+setInterval(function(){
+  if(!listening && connected && Math.random()<0.1){
+    var list=['happy','love','happy','nervous'];
+    var msgs=['Kya hukum hai Master?','Aap bahut achhe hain!','Main yahan hoon!','Ready hoon!'];
+    var i=Math.floor(Math.random()*list.length);
+    expr(list[i],msgs[i]);
+  }
+},8000);
+
+log('✅ Spider-Mobot loaded!');
+log('📱 Safari mein use karo iOS pe');
+</script>
 </body>
 </html>
